@@ -1,6 +1,10 @@
 import xml.etree.ElementTree as ET
 import re
 
+def replace_block(match):
+    formula = match.group(1)  # キャプチャした数式部分
+    return f"$$\n{formula}\n$$"  # 指定された形式に変換
+
 def convert_xml_to_markdown(xml_file, output_folder):
     # XMLをパースする
     tree = ET.parse(xml_file)
@@ -11,6 +15,7 @@ def convert_xml_to_markdown(xml_file, output_folder):
         title = item.find("title").text or "untitled"
         content = item.find("{http://purl.org/rss/1.0/modules/content/}encoded").text or ""
 
+        content = re.sub(r"<strong>(.*?)</strong>", r"***\1***", content)
         # 不要なタグを削除
         content = re.sub(r"<[^>]+>", "", content)
 
@@ -32,6 +37,10 @@ def convert_xml_to_markdown(xml_file, output_folder):
 
         # 見出しを変換 
         content = re.sub(r"<h1>(.*?)</h1>", r"## \1", content)
+
+
+    # \begin{***}...\end{***} の形式を探して置換
+        content = re.sub(r"\\begin\{.*?\}(.+?)\\end\{.*?\}", replace_block, content, flags=re.DOTALL)
 
 
         # ファイル名を決定
